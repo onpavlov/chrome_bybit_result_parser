@@ -63,8 +63,15 @@
     }
     return document.querySelector('.ant-pagination-next, [class*="pagination-next"]');
   }
-  const isDisabled = (el) => !el || el.disabled || el.getAttribute('aria-disabled') === 'true' ||
-    /disabled/i.test(el.className || '') || !!el.closest('[class*="disabled"], [disabled]');
+  // Only real "disabled" markers count: Tailwind variants like `disabled:opacity-90` are present on active buttons too.
+  const hasDisabledClass = (el) => Array.from(el.classList || []).some((c) => /(^|[-_])disabled$/i.test(c));
+  const isDisabled = (el) => {
+    if (!el) return true;
+    for (let e = el, i = 0; e && i < 3; e = e.parentElement, i++) {
+      if (e.disabled || e.getAttribute('aria-disabled') === 'true' || hasDisabledClass(e)) return true;
+    }
+    return false;
+  };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function collectAll() {
@@ -85,6 +92,8 @@
           const { rows: cur } = P.extractRows(document);
           const s = cur.map((r) => r.key).join('\n');
           if (s && s !== sig) { changed = true; break; }
+          // Bybit finds out there is no next page only after the request: same rows, "Next" now disabled.
+          if (i >= 4 && isDisabled(findNextButton())) break;
         }
         if (!changed) break;
         await sleep(300); // let the page finish rendering

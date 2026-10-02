@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bybit PnL Summary",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Parses the Bybit Transaction Log and shows a summary: profit, loss, fees, funding, ROI, and breakdowns by contract, trade and day.",
   "permissions": [
     "storage"
