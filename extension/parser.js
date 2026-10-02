@@ -1,5 +1,5 @@
-// Парсинг таблицы «Журнал транзакций» Bybit и расчёт статистики.
-// Не завязан на CSS-классы: колонки определяются по тексту заголовков (RU/EN).
+// Parses the Bybit Transaction Log table and computes statistics.
+// Does not depend on CSS classes: columns are detected by header text (RU/EN).
 (function (root) {
   'use strict';
 
@@ -103,7 +103,7 @@
     return [];
   }
 
-  // Достаёт строки текущей страницы. Возвращает массив объектов (по порядку сверху вниз).
+  // Extracts rows from the current page, top to bottom.
   function extractRows(doc) {
     const header = findHeaderRow(doc || document);
     if (!header) return { found: false, rows: [] };
@@ -114,7 +114,7 @@
       const raw = {};
       header.fields.forEach((f, i) => { if (f && raw[f] == null) raw[f] = cells[i]; });
       const key = cells.join('|');
-      if (seen.has(key)) continue; // дубли от фиксированных колонок/виртуализации
+      if (seen.has(key)) continue; // duplicates from fixed columns / virtualization
       seen.add(key);
       const row = buildRow(raw, key);
       if (row) rows.push(row);
@@ -153,11 +153,11 @@
     return r;
   }
 
-  // ---------- Аналитика ----------
+  // ---------- Analytics ----------
 
   const TRADE_LIKE = new Set(['trade', 'liquidation', 'adl', 'delivery']);
 
-  // rows: массив объектов с полем seq (больше seq = ниже в журнале = старее при равном времени).
+  // rows: objects with a seq field (higher seq = lower in the log = older when timestamps are equal).
   function analyze(input) {
     const rows = input.slice().sort((a, b) => a.ts - b.ts || b.seq - a.seq);
     const pnlRows = rows.filter((r) => r.kind !== 'transfer');
@@ -184,7 +184,7 @@
       return byDay.get(r.date);
     };
 
-    // Кривая PnL и просадка
+    // PnL curve and drawdown
     const curve = [];
     let cum = 0;
 
@@ -212,7 +212,7 @@
       curve.push({ ts: r.ts, cum });
     }
 
-    // Стартовый/конечный баланс по колонке «Баланс кошелька»
+    // Start/end balance from the Wallet Balance column
     const withBal = rows.filter((r) => r.balance != null);
     const startBalance = withBal.length ? withBal[0].balance - withBal[0].change : null;
     const endBalance = withBal.length ? withBal[withBal.length - 1].balance : null;
@@ -221,7 +221,7 @@
     T.roi = startBalance ? (T.net / startBalance) * 100 : null;
     T.balanceChangePct = startBalance ? ((endBalance - startBalance) / startBalance) * 100 : null;
 
-    // Макс. просадка по эквити = старт + накопленный PnL
+    // Max drawdown on equity = start balance + cumulative PnL
     let peak = startBalance || 0, maxDd = 0, maxDdPct = 0;
     for (const p of curve) {
       const eq = (startBalance || 0) + p.cum;
@@ -232,7 +232,7 @@
     T.maxDrawdown = maxDd;
     T.maxDrawdownPct = startBalance ? maxDdPct : null;
 
-    // Сделки «от открытия до закрытия» (позиция вернулась в 0)
+    // Trades from open to close (position returns to 0)
     const rounds = [];
     const open = new Map();
     for (const r of pnlRows) {
