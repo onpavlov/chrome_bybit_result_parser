@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Bybit PnL Summary",
+  "version": "1.0.0",
+  "description": "Парсит «Журнал транзакций» Bybit и показывает итоги: прибыль, убыток, комиссии, фандинг, ROI, разбивку по контрактам и сделкам.",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Bybit PnL: показать/скрыть итоги" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.bybit.com/*",
+        "https://*.bybit.global/*",
+        "https://*.bybit.nl/*",
+        "https://*.bybit.eu/*",
+        "https://*.bybit.kz/*",
+        "https://*.bybit.tr/*",
+        "https://*.bybit-tr.com/*",
+        "https://*.bybitglobal.com/*"
+      ],
+      "js": ["parser.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
